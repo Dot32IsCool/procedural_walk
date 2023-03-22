@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_prototype_debug_lines::*;
 
 const LEG_LENGTH: f32 = 150.0;
+const WAVE_AMPLITUDE: f32 = 50.0;
 
 fn main(){
   App::new()
@@ -85,6 +86,7 @@ fn leg_update(
     mut query: Query<(&mut Leg, &Children)>,
     mut transform_query: Query<&mut Transform>,
     mut lines: ResMut<DebugLines>,
+    time: Res<Time>,
 ) {
     for (mut leg, children) in query.iter_mut() {
         for (i, child) in children.iter().enumerate() {
@@ -147,9 +149,6 @@ fn inverse_kinematics(
     length1: f32,
     length2: f32,
 ) -> (f32, f32) {
-    let mut angle1 = 0.0;
-    let mut angle2 = 0.0;
-
     let mut target = target - base;
     let target_length = target.length();
 
@@ -160,11 +159,11 @@ fn inverse_kinematics(
 
     let cos_angle1 = (target_length.powi(2) + length1.powi(2) - length2.powi(2))
         / (2.0 * target_length * length1);
-    angle1 = cos_angle1.acos();
+    let mut angle1 = cos_angle1.acos();
 
     let cos_angle2 = (length1.powi(2) + length2.powi(2) - target_length.powi(2))
         / (2.0 * length1 * length2);
-    angle2 = cos_angle2.acos();
+    let mut angle2 = cos_angle2.acos();
 
     let angle1_sign = target.y.signum();
     let angle2_sign = -target.x.signum();
