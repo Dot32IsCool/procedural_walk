@@ -3,6 +3,7 @@ use bevy_prototype_debug_lines::*;
 
 const LEG_LENGTH: f32 = 150.0;
 const WAVE_AMPLITUDE: f32 = 50.0;
+const WAVE_SPEED: f32 = 0.5;
 
 fn main(){
   App::new()
@@ -93,6 +94,13 @@ fn leg_update(
             let mut transform = transform_query.get_mut(*child).unwrap();
             // transform.translation = leg.points[i];
 
+            // Set leg [2] point to wave
+            leg.points[2] = Vec3::new(
+                0.0,
+                -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).sin(),
+                0.0,
+            );
+
             // Use inverse kinematics to calculate joint angles
             let (angle1, angle2) = inverse_kinematics(
                 leg.points[2],
@@ -143,36 +151,36 @@ fn leg_update(
 }
 
 // 2-joint inverse kinematics with isosceles triangle
-fn inverse_kinematics(
-    target: Vec3,
-    base: Vec3,
-    length1: f32,
-    length2: f32,
-) -> (f32, f32) {
-    let mut target = target - base;
-    let target_length = target.length();
+// fn inverse_kinematics(
+//     target: Vec3,
+//     base: Vec3,
+//     length1: f32,
+//     length2: f32,
+// ) -> (f32, f32) {
+//     let mut target = target - base;
+//     let target_length = target.length();
 
-    // If target is too far away, clamp to max length
-    if target_length > length1 + length2 {
-        target = target.normalize() * (length1 + length2);
-    }
+//     // If target is too far away, clamp to max length
+//     if target_length > length1 + length2 {
+//         target = target.normalize() * (length1 + length2);
+//     }
 
-    let cos_angle1 = (target_length.powi(2) + length1.powi(2) - length2.powi(2))
-        / (2.0 * target_length * length1);
-    let mut angle1 = cos_angle1.acos();
+//     let cos_angle1 = (target_length.powi(2) + length1.powi(2) - length2.powi(2))
+//         / (2.0 * target_length * length1);
+//     let mut angle1 = cos_angle1.acos();
 
-    let cos_angle2 = (length1.powi(2) + length2.powi(2) - target_length.powi(2))
-        / (2.0 * length1 * length2);
-    let mut angle2 = cos_angle2.acos();
+//     let cos_angle2 = (length1.powi(2) + length2.powi(2) - target_length.powi(2))
+//         / (2.0 * length1 * length2);
+//     let mut angle2 = cos_angle2.acos();
 
-    let angle1_sign = target.y.signum();
-    let angle2_sign = -target.x.signum();
+//     let angle1_sign = target.y.signum();
+//     let angle2_sign = -target.x.signum();
 
-    angle1 *= angle1_sign;
-    angle2 *= angle2_sign;
+//     angle1 *= angle1_sign;
+//     angle2 *= angle2_sign;
 
-    (angle1, angle2)
-}
+//     (angle1, angle2)
+// }
 
 // fn inverse_kinematics(
 //     target: Vec3,
@@ -187,31 +195,31 @@ fn inverse_kinematics(
 //     todo!()
 // }
 
-// fn inverse_kinematics(
-//     target: Vec3,
-//     base: Vec3,
-//     length1: f32,
-//     length2: f32,
-// ) -> (f32, f32) {
-//     let dist = (target - base).length();
-//     // let direction = (target - base).normalize();
-//     let atan = (target.y - base.y).atan2(target.x - base.x);
+fn inverse_kinematics(
+    mut target: Vec3,
+    base: Vec3,
+    length1: f32,
+    length2: f32,
+) -> (f32, f32) {
+    let mut dist = (target - base).length();
 
-//     if dist > length1 + length2 {
-//         // let target = base + direction * (length1 + length2);
-//         // return inverse_kinematics(target, base, length1, length2);
-//         todo!()
-//     }
+    if dist > length1 + length2 {
+        target = target.normalize() * (length1 + length2);
+        dist = (target - base).length();
+    }
 
-//     // local cosAngle0 = ((dist * dist) + (l1 * l1) - (l2 * l2)) / (2 * dist * l1)
-//     let cos_angle1 = (dist.powi(2) + length1.powi(2) - length2.powi(2)) / (2.0 * dist * length1);
-//     // local theta1 = atan - math.acos(cosAngle0)
-//     let angle1 = atan - cos_angle1.acos();
+    // let direction = (target - base).normalize();
+    let atan = (target.y - base.y).atan2(target.x - base.x);
 
-//     // local cosAngle1 = ((l1 * l1) + (l2 * l2) - (dist * dist)) / (2 * l1 * l2)
-//     let cos_angle2 = (length1.powi(2) + length2.powi(2) - dist.powi(2)) / (2.0 * length1 * length2);
-//     // local theta2 = math.pi - math.acos(cosAngle1)
-//     let angle2 = std::f32::consts::PI - cos_angle2.acos();
+    // local cosAngle0 = ((dist * dist) + (l1 * l1) - (l2 * l2)) / (2 * dist * l1)
+    let cos_angle1 = (dist.powi(2) + length1.powi(2) - length2.powi(2)) / (2.0 * dist * length1);
+    // local theta1 = atan - math.acos(cosAngle0)
+    let angle1 = atan - cos_angle1.acos();
 
-//     (angle1, angle2)
-// }
+    // local cosAngle1 = ((l1 * l1) + (l2 * l2) - (dist * dist)) / (2 * l1 * l2)
+    let cos_angle2 = (length1.powi(2) + length2.powi(2) - dist.powi(2)) / (2.0 * length1 * length2);
+    // local theta2 = math.pi - math.acos(cosAngle1)
+    let angle2 = std::f32::consts::PI - cos_angle2.acos();
+
+    (angle1, angle2)
+}
