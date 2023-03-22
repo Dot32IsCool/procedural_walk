@@ -5,6 +5,13 @@ const LEG_LENGTH: f32 = 150.0;
 const WAVE_AMPLITUDE: f32 = 50.0;
 const WAVE_SPEED: f32 = 2.5;
 
+struct SolvedIK {
+    angle1: f32,
+    knee: Vec3,
+    angle2: f32,
+    foot: Vec3,
+}
+
 fn main(){
   App::new()
     .add_plugins(DefaultPlugins)
@@ -102,7 +109,7 @@ fn leg_update(
             );
 
             // Use inverse kinematics to calculate joint angles
-            let (angle1, angle2) = inverse_kinematics(
+            let ik = inverse_kinematics(
                 leg.points[2],
                 leg.points[0],
                 LEG_LENGTH/2.0,
@@ -112,21 +119,13 @@ fn leg_update(
             // println!("angle1: {}, angle2: {}", angle1, angle2);
 
             // Update leg second point
-            leg.points[1] = Vec3::new(
-                angle1.cos() * LEG_LENGTH/2.0,
-                angle1.sin() * LEG_LENGTH/2.0,
-                0.0,
-            );
+            leg.points[1] = ik.knee;
 
             // Clamp last point to leg length
             // leg.points[2] = leg.points[1] + (leg.points[2] - leg.points[1]).normalize() * LEG_LENGTH/2.0;
 
             // Update last leg point to start at joint and move by angle2
-            leg.points[2] = leg.points[1] + Vec3::new(
-                angle2.cos() * LEG_LENGTH/2.0,
-                angle2.sin() * LEG_LENGTH/2.0,
-                0.0,
-            );
+            leg.points[2] = ik.foot;
 
             // println!("leg.points[0]: {:?}", leg.points[0].y);
             // println!("leg.points[1]: {:?}", leg.points[1].y);
@@ -137,7 +136,7 @@ fn leg_update(
                 transform.translation = (leg.points[0] + leg.points[1])/2.0;
                 // transform.translation = leg.points[0];
                 // println!("transform: {:?}", transform.translation);
-                transform.rotation = Quat::from_rotation_z(angle1+std::f32::consts::PI/2.0);
+                transform.rotation = Quat::from_rotation_z(ik.angle1+std::f32::consts::PI/2.0);
 
                 // Set rotation to go from point 0 to point 1
                 // let angle = (leg.points[1] - leg.points[0]).angle_between(Vec3::new(0.0, 1.0, 0.0));
@@ -146,7 +145,7 @@ fn leg_update(
                 transform.translation = (leg.points[1] + leg.points[2])/2.0;
                 // transform.translation = leg.points[2];
                 // println!("transform: {:?}", transform.translation);
-                transform.rotation = Quat::from_rotation_z(angle2+std::f32::consts::PI/2.0);
+                transform.rotation = Quat::from_rotation_z(ik.angle2+std::f32::consts::PI/2.0);
 
                 // Set rotation to go from point 1 to point 2
                 // let angle = (leg.points[2] - leg.points[1]).angle_between(Vec3::new(0.0, 1.0, 0.0));
@@ -210,7 +209,7 @@ fn inverse_kinematics(
     base: Vec3,
     length1: f32,
     length2: f32,
-) -> (f32, f32) {
+) -> SolvedIK {
     let mut dist = (target - base).length();
 
     if dist > length1 + length2 {
@@ -240,5 +239,12 @@ fn inverse_kinematics(
     // let angle2 = (target - knee).angle_between(Vec3::new(0.0, 1.0, 0.0));
 
 
-    (angle1, angle2)
+    // (angle1, angle2)
+
+    SolvedIK {
+        angle1,
+        knee,
+        angle2,
+        foot: target,
+    }
 }
