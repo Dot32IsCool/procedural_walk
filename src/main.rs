@@ -3,7 +3,7 @@ use bevy_prototype_debug_lines::*;
 
 const LEG_LENGTH: f32 = 150.0;
 const WAVE_AMPLITUDE: f32 = 50.0;
-const WAVE_SPEED: f32 = 0.5;
+const WAVE_SPEED: f32 = 2.5;
 
 fn main(){
   App::new()
@@ -118,6 +118,16 @@ fn leg_update(
                 0.0,
             );
 
+            // Clamp last point to leg length
+            // leg.points[2] = leg.points[1] + (leg.points[2] - leg.points[1]).normalize() * LEG_LENGTH/2.0;
+
+            // Update last leg point to start at joint and move by angle2
+            leg.points[2] = leg.points[1] + Vec3::new(
+                angle2.cos() * LEG_LENGTH/2.0,
+                angle2.sin() * LEG_LENGTH/2.0,
+                0.0,
+            );
+
             // println!("leg.points[0]: {:?}", leg.points[0].y);
             // println!("leg.points[1]: {:?}", leg.points[1].y);
             // println!("leg.points[2]: {:?}", leg.points[2].y);
@@ -136,11 +146,11 @@ fn leg_update(
                 transform.translation = (leg.points[1] + leg.points[2])/2.0;
                 // transform.translation = leg.points[2];
                 // println!("transform: {:?}", transform.translation);
-                // transform.rotation = Quat::from_rotation_z(angle2+std::f32::consts::PI/2.0);
+                transform.rotation = Quat::from_rotation_z(angle2+std::f32::consts::PI/2.0);
 
                 // Set rotation to go from point 1 to point 2
-                let angle = (leg.points[2] - leg.points[1]).angle_between(Vec3::new(0.0, 1.0, 0.0));
-                transform.rotation = Quat::from_rotation_z(angle);
+                // let angle = (leg.points[2] - leg.points[1]).angle_between(Vec3::new(0.0, 1.0, 0.0));
+                // transform.rotation = Quat::from_rotation_z(angle+std::f32::consts::PI/2.0);
             }
 
             // Draw debug lines
@@ -208,18 +218,27 @@ fn inverse_kinematics(
         dist = (target - base).length();
     }
 
-    // let direction = (target - base).normalize();
     let atan = (target.y - base.y).atan2(target.x - base.x);
 
-    // local cosAngle0 = ((dist * dist) + (l1 * l1) - (l2 * l2)) / (2 * dist * l1)
     let cos_angle1 = (dist.powi(2) + length1.powi(2) - length2.powi(2)) / (2.0 * dist * length1);
-    // local theta1 = atan - math.acos(cosAngle0)
     let angle1 = atan - cos_angle1.acos();
 
+    let knee = Vec3::new(
+        base.x + length1 * angle1.cos(),
+        base.y + length1 * angle1.sin(),
+        0.0,
+    );
+
     // local cosAngle1 = ((l1 * l1) + (l2 * l2) - (dist * dist)) / (2 * l1 * l2)
-    let cos_angle2 = (length1.powi(2) + length2.powi(2) - dist.powi(2)) / (2.0 * length1 * length2);
+    // let cos_angle2 = (length1.powi(2) + length2.powi(2) - dist.powi(2)) / (2.0 * length1 * length2);
     // local theta2 = math.pi - math.acos(cosAngle1)
-    let angle2 = std::f32::consts::PI - cos_angle2.acos();
+    // let angle2 = std::f32::consts::PI - cos_angle2.acos();
+
+    // calculate angle 2 by starting at the end of leg 1 and finding the angle to the target using atan2
+    let angle2 = (target.y - knee.y).atan2(target.x - knee.x);
+
+    // let angle2 = (target - knee).angle_between(Vec3::new(0.0, 1.0, 0.0));
+
 
     (angle1, angle2)
 }
