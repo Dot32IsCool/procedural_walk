@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_prototype_debug_lines::*;
 
-const LEG_LENGTH: f32 = 550.0;
+const LEG_LENGTH: f32 = 150.0;
 
 fn main(){
   App::new()
@@ -108,21 +108,29 @@ fn leg_update(
                 0.0,
             );
 
-            println!("leg.points[0]: {:?}", leg.points[0].y);
-            println!("leg.points[1]: {:?}", leg.points[1].y);
-            println!("leg.points[2]: {:?}", leg.points[2].y);
+            // println!("leg.points[0]: {:?}", leg.points[0].y);
+            // println!("leg.points[1]: {:?}", leg.points[1].y);
+            // println!("leg.points[2]: {:?}", leg.points[2].y);
 
             // Update child transform
             if i == 0 {
                 transform.translation = (leg.points[0] + leg.points[1])/2.0;
                 // transform.translation = leg.points[0];
                 // println!("transform: {:?}", transform.translation);
-                transform.rotation = Quat::from_rotation_z(angle1);
+                transform.rotation = Quat::from_rotation_z(angle1+std::f32::consts::PI/2.0);
+
+                // Set rotation to go from point 0 to point 1
+                // let angle = (leg.points[1] - leg.points[0]).angle_between(Vec3::new(0.0, 1.0, 0.0));
+                // transform.rotation = Quat::from_rotation_z(angle);
             } else {
                 transform.translation = (leg.points[1] + leg.points[2])/2.0;
                 // transform.translation = leg.points[2];
                 // println!("transform: {:?}", transform.translation);
-                transform.rotation = Quat::from_rotation_z(angle2);
+                // transform.rotation = Quat::from_rotation_z(angle2+std::f32::consts::PI/2.0);
+
+                // Set rotation to go from point 1 to point 2
+                let angle = (leg.points[2] - leg.points[1]).angle_between(Vec3::new(0.0, 1.0, 0.0));
+                transform.rotation = Quat::from_rotation_z(angle);
             }
 
             // Draw debug lines
