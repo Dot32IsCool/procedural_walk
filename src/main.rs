@@ -97,35 +97,34 @@ fn leg_update(
     time: Res<Time>,
 ) {
     for (mut leg, children) in query.iter_mut() {
+        // Set leg [2] point to wave
+        leg.points[2] = Vec3::new(
+            0.0,
+            -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).sin(),
+            0.0,
+        );
+
+        // Use inverse kinematics to calculate joint angles
+        let ik = inverse_kinematics(
+            leg.points[2],
+            leg.points[0],
+            LEG_LENGTH/2.0,
+            LEG_LENGTH/2.0,
+        );
+
+        // println!("angle1: {}, angle2: {}", angle1, angle2);
+
+        // Update leg second point
+        leg.points[1] = ik.knee;
+
+        // Clamp last point to leg length
+        // leg.points[2] = leg.points[1] + (leg.points[2] - leg.points[1]).normalize() * LEG_LENGTH/2.0;
+
+        // Update last leg point to start at joint and move by angle2
+        leg.points[2] = ik.foot;
         for (i, child) in children.iter().enumerate() {
             let mut transform = transform_query.get_mut(*child).unwrap();
             // transform.translation = leg.points[i];
-
-            // Set leg [2] point to wave
-            leg.points[2] = Vec3::new(
-                0.0,
-                -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).sin(),
-                0.0,
-            );
-
-            // Use inverse kinematics to calculate joint angles
-            let ik = inverse_kinematics(
-                leg.points[2],
-                leg.points[0],
-                LEG_LENGTH/2.0,
-                LEG_LENGTH/2.0,
-            );
-
-            // println!("angle1: {}, angle2: {}", angle1, angle2);
-
-            // Update leg second point
-            leg.points[1] = ik.knee;
-
-            // Clamp last point to leg length
-            // leg.points[2] = leg.points[1] + (leg.points[2] - leg.points[1]).normalize() * LEG_LENGTH/2.0;
-
-            // Update last leg point to start at joint and move by angle2
-            leg.points[2] = ik.foot;
 
             // println!("leg.points[0]: {:?}", leg.points[0].y);
             // println!("leg.points[1]: {:?}", leg.points[1].y);
