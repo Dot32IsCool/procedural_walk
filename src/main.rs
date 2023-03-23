@@ -16,6 +16,7 @@ struct SolvedIK {
 
 fn main(){
   App::new()
+    .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
     .add_plugins(DefaultPlugins)
     .add_plugin(DebugLinesPlugin::default())
     .add_startup_system(setup)
@@ -27,6 +28,7 @@ fn main(){
 struct Leg {
     points: [Vec3; 3],
     // points: Vec<Vec3>,
+    wave_offset: f32,
 }
 
 // #[derive(Component)]
@@ -48,7 +50,7 @@ fn setup(
     commands.spawn(
         (
             SpatialBundle {
-                transform: Transform::from_translation(Vec3::ZERO),
+                transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
                 ..default()
             },
             Leg {
@@ -57,6 +59,7 @@ fn setup(
                     Vec3::new(0., -LEG_LENGTH/2., 0.),
                     Vec3::new(0., -LEG_LENGTH/1.5, 0.),
                 ],
+                wave_offset: 0.0,
             },
         )
     ).with_children(|parent| {
@@ -99,6 +102,63 @@ fn setup(
             ..default()
         });
     });
+
+    // Spawn spatial bundle to hold leg segments
+    commands.spawn(
+        (
+            SpatialBundle {
+                transform: Transform::from_translation(Vec3::ZERO),
+                ..default()
+            },
+            Leg {
+                points: [
+                    Vec3::new(0., 0., 0.),
+                    Vec3::new(0., -LEG_LENGTH/2., 0.),
+                    Vec3::new(0., -LEG_LENGTH/1.5, 0.),
+                ],
+                wave_offset: std::f32::consts::PI,
+            },
+        )
+    ).with_children(|parent| {
+        parent.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0.25, 0.25, 0.75) * 0.5,
+                    // custom_size: Some(Vec2::new(25.0, LEG_LENGTH/2.0)),
+                    ..default()
+                },
+                // transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
+                transform: Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    scale: Vec3::new(25.0, LEG_LENGTH/2.0, 1.0),
+                    ..default()
+                },
+                ..default()
+            }, 
+        ));
+        parent.spawn((
+            SpriteBundle {
+                sprite: Sprite {
+                    color: Color::rgb(0.25, 0.25, 0.75) * 0.5,
+                    // custom_size: Some(Vec2::new(25.0, LEG_LENGTH/2.0)),
+                    ..default()
+                },
+                // transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
+                transform: Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    scale: Vec3::new(25.0, LEG_LENGTH/2.0, 1.0),
+                    ..default()
+                },
+                ..default()
+            }, 
+        ));
+        parent.spawn(MaterialMesh2dBundle {
+            mesh: meshes.add(shape::Circle::new(12.5).into()).into(),
+            material: materials.add(ColorMaterial::from(Color::rgb(0.25, 0.25, 0.75) * 0.5)),
+            transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
+            ..default()
+        });
+    });
 }
 
 // Update leg segments
@@ -111,8 +171,8 @@ fn leg_update(
     for (mut leg, children) in query.iter_mut() {
         // Set leg [2] point to wave
         leg.points[2] = Vec3::new(
-            WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).cos(),
-            -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).sin(),
+            WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).cos(),
+            -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).sin(),
             0.0,
         );
 
@@ -167,8 +227,8 @@ fn leg_update(
 
         }
         // Draw debug lines
-        lines.line(leg.points[0], leg.points[1], 0.);
-        lines.line(leg.points[1], leg.points[2], 0.);
+        // lines.line(leg.points[0], leg.points[1], 0.);
+        // lines.line(leg.points[1], leg.points[2], 0.);
     }
 }
 
@@ -262,7 +322,7 @@ fn inverse_kinematics(
         println!("knee: {:?}", knee);
         println!("length1: {:?}", length1);
         println!("length2: {:?}", length2);
-        
+
         panic!("NaN");
     }
 
