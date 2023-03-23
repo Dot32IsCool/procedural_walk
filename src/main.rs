@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use bevy_prototype_debug_lines::*;
 
 const LEG_LENGTH: f32 = 150.0;
@@ -34,7 +34,11 @@ struct Leg {
 // }
 
 // Bevy setup system
-fn setup(mut commands: Commands) {
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     // 2D orthographic camera
     commands.spawn(Camera2dBundle::default());
 
@@ -86,6 +90,12 @@ fn setup(mut commands: Commands) {
                 ..default()
             }, 
         ));
+        parent.spawn(MaterialMesh2dBundle {
+            mesh: meshes.add(shape::Circle::new(12.5).into()).into(),
+            material: materials.add(ColorMaterial::from(Color::rgb(0.25, 0.25, 0.75))),
+            transform: Transform::from_translation(Vec3::new(0., 0., 0.)),
+            ..default()
+        });
     });
 }
 
@@ -140,7 +150,7 @@ fn leg_update(
                 // Set rotation to go from point 0 to point 1
                 // let angle = (leg.points[1] - leg.points[0]).angle_between(Vec3::new(0.0, 1.0, 0.0));
                 // transform.rotation = Quat::from_rotation_z(angle);
-            } else {
+            } else if i == 1 {
                 transform.translation = (leg.points[1] + leg.points[2])/2.0;
                 // transform.translation = leg.points[2];
                 // println!("transform: {:?}", transform.translation);
@@ -149,12 +159,14 @@ fn leg_update(
                 // Set rotation to go from point 1 to point 2
                 // let angle = (leg.points[2] - leg.points[1]).angle_between(Vec3::new(0.0, 1.0, 0.0));
                 // transform.rotation = Quat::from_rotation_z(angle+std::f32::consts::PI/2.0);
+            } else {
+                transform.translation = leg.points[1];
             }
 
-            // Draw debug lines
-            lines.line(leg.points[0], leg.points[1], 0.);
-            lines.line(leg.points[1], leg.points[2], 0.);
         }
+        // Draw debug lines
+        lines.line(leg.points[0], leg.points[1], 0.);
+        lines.line(leg.points[1], leg.points[2], 0.);
     }
 }
 
