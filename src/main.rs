@@ -1,3 +1,5 @@
+use core::panic;
+
 use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use bevy_prototype_debug_lines::*;
 
@@ -224,7 +226,7 @@ fn inverse_kinematics(
     let mut dist = (target - base).length();
 
     if dist > length1 + length2 {
-        target = target.normalize() * (length1 + length2);
+        target = (target.normalize() * (length1 + length2)).clamp_length(0., length1 + length2);
         dist = (target - base).length();
     }
 
@@ -249,6 +251,20 @@ fn inverse_kinematics(
 
     // let angle2 = (target - knee).angle_between(Vec3::new(0.0, 1.0, 0.0));
 
+    if angle1.is_nan() || angle2.is_nan() {
+        println!("angle1: {:?}", angle1);
+        println!("angle2: {:?}", angle2);
+        println!("target: {:?}", target);
+        println!("base: {:?}", base);
+        println!("dist: {:?}", dist);
+        println!("atan: {:?}", atan);
+        println!("cos_angle1: {:?}", cos_angle1);
+        println!("knee: {:?}", knee);
+        println!("length1: {:?}", length1);
+        println!("length2: {:?}", length2);
+        
+        panic!("NaN");
+    }
 
     // (angle1, angle2)
 
