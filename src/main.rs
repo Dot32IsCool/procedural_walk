@@ -109,7 +109,7 @@ fn leg_update(
     for (mut leg, children) in query.iter_mut() {
         // Set leg [2] point to wave
         leg.points[2] = Vec3::new(
-            0.0,
+            WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).cos(),
             -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED).sin(),
             0.0,
         );
