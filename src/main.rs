@@ -287,8 +287,14 @@ fn inverse_kinematics(
     let mut dist = (target - base).length();
 
     if dist > length1 + length2 {
-        target = (target.normalize() * (length1 + length2)).clamp_length(0., length1 + length2);
-        dist = (target - base).length();
+        for i in 0..100 {
+            target = (target - base).clamp_length(0., length1 + length2) + base;
+            dist = (target - base).length();
+            if dist < length1 + length2 {
+                println!("i: {}", i);
+                break;
+            }
+        }
     }
 
     let atan = (target.y - base.y).atan2(target.x - base.x);
