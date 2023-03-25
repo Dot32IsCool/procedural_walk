@@ -5,7 +5,8 @@ use bevy_prototype_debug_lines::*;
 
 const LEG_LENGTH: f32 = 150.0;
 const WAVE_AMPLITUDE: f32 = 50.0;
-const WAVE_SPEED: f32 = 2.5;
+const WAVE_SPEED: f32 = 9.5;
+const STRIDE_LENGTH: f32 = 250.0;
 
 struct SolvedIK {
     angle1: f32,
@@ -171,7 +172,7 @@ fn leg_update(
     for (mut leg, children) in query.iter_mut() {
         // Set leg [2] point to wave
         leg.points[2] = Vec3::new(
-            WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).cos(),
+            STRIDE_LENGTH * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).cos(),
             -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).sin(),
             0.0,
         );
