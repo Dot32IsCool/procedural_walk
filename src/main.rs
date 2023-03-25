@@ -6,7 +6,8 @@ use bevy_prototype_debug_lines::*;
 const LEG_LENGTH: f32 = 150.0;
 const WAVE_AMPLITUDE: f32 = 50.0;
 const WAVE_SPEED: f32 = 9.5;
-const STRIDE_LENGTH: f32 = 250.0;
+const STRIDE_LENGTH: f32 = 150.0;
+const BOUNCE_HEIGHT: f32 = 25.0;
 
 struct SolvedIK {
     angle1: f32,
@@ -170,10 +171,18 @@ fn leg_update(
     time: Res<Time>,
 ) {
     for (mut leg, children) in query.iter_mut() {
+        // Set leg [0] point to abs of wave
+        leg.points[0] = Vec3::new(
+            0.0,
+            BOUNCE_HEIGHT * (time.elapsed_seconds() * WAVE_SPEED).cos().abs(),
+            0.0,
+        );
+
+
         // Set leg [2] point to wave
         leg.points[2] = Vec3::new(
             STRIDE_LENGTH * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).cos(),
-            -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).sin(),
+            -LEG_LENGTH + WAVE_AMPLITUDE * (time.elapsed_seconds() * WAVE_SPEED + leg.wave_offset).sin() +leg.points[0].y,
             0.0,
         );
 
@@ -286,9 +295,9 @@ fn inverse_kinematics(
 ) -> SolvedIK {
     let mut dist = (target - base).length();
 
-    if dist > length1 + length2 {
+    if dist > length1 + length2 - 0.05 {
         for i in 0..100 {
-            target = (target - base).clamp_length(0., length1 + length2) + base;
+            target = (target - base).clamp_length(0., length1 + length2 - 0.05) + base;
             dist = (target - base).length();
             if dist < length1 + length2 {
                 println!("i: {}", i);
@@ -330,7 +339,7 @@ fn inverse_kinematics(
         println!("length1: {:?}", length1);
         println!("length2: {:?}", length2);
 
-        panic!("NaN");
+        // panic!("NaN");
     }
 
     // (angle1, angle2)
